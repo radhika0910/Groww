@@ -1,28 +1,51 @@
 // Path: components\MostRated.jsx
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useGetStocksQuery } from '../features/api/apiSlice'; // Import the RTK Query hook
 
 export default function MostRated() {
-  const cards = [
-    { id: '1', title: 'Card 1', description: 'Description 1' },
-    { id: '2', title: 'Card 2', description: 'Description 2' },
-    { id: '3', title: 'Card 3', description: 'Description 3' },
-    { id: '4', title: 'Card 4', description: 'Description 4' },
-  ];
+  const query = useGetStocksQuery();
+  const { data: stocks, isLoading, error } = query; // Fetch stock data
+
+  // Handle loading and error states
+  if (isLoading) {
+    console.log('query : ' + query);
+    console.log('stocks:', stocks, 'error:', error);
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4caf50" />
+        <Text>Loading stocks...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load stocks. Please try again later.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       {/* Section Heading */}
       <Text style={styles.heading}>Most Rated</Text>
 
-      {/* 2x2 Grid of Cards */}
-      <View style={styles.grid}>
-        {cards.map((card) => (
-          <TouchableOpacity key={card.id} style={styles.card}>
-            <Text style={styles.cardTitle}>{card.title}</Text>
-            <Text style={styles.cardDescription}>{card.description}</Text>
+      {/* Grid of Cards */}
+      <FlatList
+        data={stocks} // Use the fetched stock data
+        keyExtractor={(item) => item.symbol}
+        numColumns={2} // Display cards in a 2-column grid
+        renderItem={({ item }) => (
+          <TouchableOpacity key={item.symbol} style={styles.card}>
+            <Text style={styles.cardTitle}>{item.name}</Text>
+            <Text style={styles.cardDescription}>Symbol: {item.symbol}</Text>
+            <Text style={styles.cardDescription}>Sector: {item.sector}</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+        )}
+        contentContainerStyle={styles.grid}
+      />
     </View>
   );
 }
@@ -37,8 +60,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   card: {
@@ -61,5 +82,19 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     color: '#666',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
   },
 });
